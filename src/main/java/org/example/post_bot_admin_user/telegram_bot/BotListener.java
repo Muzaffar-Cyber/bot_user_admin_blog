@@ -146,7 +146,9 @@ public class BotListener {
                 UserMessages userMessages = new UserMessages();
                 userMessages.setUserTelegramId(message.from.id);
                 userMessages.setMessage(message.text);
-                byAdminRole.ifPresent(user -> userMessages.setAdminTelegramId(user.getUserTelegramId()));
+                if(byAdminRole.isPresent()) {
+                    userMessages.setAdminTelegramId(userMessages.getAdminTelegramId());
+                }
                 userMessages.setChatId(message.chat.id);
                 userMessageRepository.save(userMessages);
                 context.sendMessage(byAdminRole.get().getChatId(), String.format("New message from \"%s\": \nContent: %s",
