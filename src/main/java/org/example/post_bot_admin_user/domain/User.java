@@ -1,6 +1,7 @@
 package org.example.post_bot_admin_user.domain;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
@@ -28,5 +29,6 @@ public class User {
     @Enumerated(EnumType.STRING)
     private UserStatus userStatus;
     private String chatId;
+    private int pswCounter = 0;
 
 }

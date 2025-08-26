@@ -107,36 +107,42 @@ public class BotListener {
         }
     }
 
-    private short counter = 1;
 
     public void onHandleTextData(BotContext context, Message message) {
         Optional<User> byTelegramId = userRepository.findByUserTelegramId(message.from.id.toString());
         if (byTelegramId.isPresent()) {
-            if (byTelegramId.get().getAdminRole().equals(Role.ADMIN)) {
-                if (byTelegramId.get().getUserStatus().equals(UserStatus.PASSWORD_ENTERING) &&
+            User user1 = byTelegramId.get();
+            if (user1.getAdminRole().equals(Role.ADMIN)) {
+                if (user1.getUserStatus().equals(UserStatus.PASSWORD_ENTERING) &&
                         message.text.trim().equals("123")) {
-                    byTelegramId.get().setUserStatus(UserStatus.PASSWORD_SUCCESS);
-                    byTelegramId.get().setAdminRole(Role.ADMIN);
-                    userRepository.save(byTelegramId.get());
+                    user1.setUserStatus(UserStatus.PASSWORD_SUCCESS);
+                    user1.setPswCounter(0);
+//                    user1.setAdminRole(Role.ADMIN);
+                    userRepository.save(user1);
                     context.sendMessage(message.chat.id, "Welcome ADMIN").exec();
                     BotMenu.blogAdminMenu(context, message.chat.id);
-                    counter = 0;
-                } else {
-                    if (counter >= 3) {
+                }
+                if (user1.getUserStatus().equals(UserStatus.PASSWORD_ENTERING) &&
+                        !message.text.trim().equals("123")) {
+                    if (user1.getPswCounter() >= 3) {
                         context.sendMessage(message.chat.id, "Password wrong. Please select the correct role again").exec();
                         BotMenu.selectRoll(context, message.chat.id);
-                        counter = 0;
+                        user1.setPswCounter(0);
+                        userRepository.save(user1);
                         return;
                     }
-                    counter++;
-                    context.sendMessage(message.chat.id, String.format("Password wrong. Try again %d-time entering password", counter)).exec();
+                    user1.setPswCounter(user1.getPswCounter() + 1);
+                    userRepository.save(user1);
+                    if (user1.getPswCounter() < 3) {
+                        context.sendMessage(message.chat.id, String.format("Password wrong. Try again %d-time entering password", user1.getPswCounter())).exec();
+                    }
                 }
-            } else {
+            }
+
+
+            if (user1.getAdminRole().equals(Role.USER)) {
                 Optional<User> byAdminRole = userRepository.findByAdminRole(Role.ADMIN);
-                Optional<User> byUserTelegramId = userRepository.findByUserTelegramId(message.from.id.toString());
-                byUserTelegramId.ifPresent(user -> {
-                    byUserTelegramId.get().setUserStatus(UserStatus.SERVICE_SELECTING);
-                });
+                user1.setUserStatus(UserStatus.SERVICE_SELECTING);
                 UserMessages userMessages = new UserMessages();
                 userMessages.setUserTelegramId(message.from.id);
                 userMessages.setMessage(message.text);
